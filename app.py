@@ -5,7 +5,7 @@ import flask
 
 app = flask.Flask(__name__)
 
-character_names = { "\n": "\\n", "\r": "\\r", "\t": "\\t" }
+character_names = { "\n": "LF", "\r": "CR", "\t": "TAB" }
 
 # Load the Unicode blocks list from our file.
 unicode_blocks = []
@@ -48,6 +48,10 @@ def highlight_content(text):
 
     if lookup_block(character) != "Basic Latin":
       suspicious = True
+
+    if len(ret) > 0 and ret[-1]["character"]+character == "\r\n":
+      ret[-1]["display"] += display
+      continue
 
     ret.append({
       "codepoint": hex(ord(character)),
