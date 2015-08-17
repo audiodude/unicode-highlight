@@ -1,36 +1,67 @@
+import re
+import unicodedata
+import urllib
 import flask
 
 app = flask.Flask(__name__)
 
-ZWS = flask.Markup('<span class="highlight zero-width-char">zw</span>')
+character_names = { "\n": "LF", "\r": "CR", "\t": "TAB" }
 
-def replace_zero_width(text):
-  text = text.replace(u'\u200B', ZWS).replace(u'\u200C', ZWS)
-  return text.replace(u'\u200D', ZWS).replace(u'\uFEFF', ZWS)
+# Load the Unicode blocks list from our file.
+unicode_blocks = []
+with open("unidata-blocks.txt") as f:
+  for line in f:
+    if line.strip() == "" or line[0] == "#": continue
+    m = re.match("([0-9A-F]+)\.\.([0-9A-F]+); (.*)", line)
+    unicode_blocks.append({
+      "start": int(m.group(1), 16),
+      "end": int(m.group(2), 16),
+      "name": m.group(3),
+    })
+
+def lookup_block(character):
+  character = ord(character)
+  for block in unicode_blocks:
+    if block["start"] <= character <= block["end"]:
+      return block["name"]
+  return None
 
 def highlight_content(text):
-  escaped = flask.Markup.escape(text)
-  without_zwc = replace_zero_width(escaped)
-  with_breaks = without_zwc.replace('\n', flask.Markup('<br>'))
-  bytestring = with_breaks.encode('utf-8')
-  print repr(bytestring)
-  output = []
+  ret = []
+  for character in unicode(text):
+    suspicious = False
 
-  in_high_bytes = False
-  for byte in bytestring:
-    if ord(byte) > 127:
-      if not in_high_bytes:
-        in_high_bytes = True
-        output.extend(list(b'<span class="highlight">'))
-    elif in_high_bytes:
-      output.extend(list(b'</span>'))
-      in_high_bytes = False
-    output.append(byte)
+    # How to display this character?
+    if unicodedata.category(character)[0] in ("L", "N", "P", "S"):
+      # letters, numbers, punctuation, and symbols -- things that should be displayable
+      display = character
+    elif character == " ":
+      # show the space as a space
+      display = " "
+    elif character in character_names:
+      # use some names that we preset
+      display = character_names[character]
+    else:
+      # show the character as its name ("?" as fallback if character has no name)
+      display = unicodedata.name(character, "?")
+      suspicious = True
 
-  if in_high_bytes:
-    output.extend(list(b'</span>'))
+    if lookup_block(character) != "Basic Latin":
+      suspicious = True
 
-  return ''.join(output).decode('utf-8')
+    if len(ret) > 0 and ret[-1]["character"]+character == "\r\n":
+      ret[-1]["display"] += display
+      continue
+
+    ret.append({
+      "codepoint": hex(ord(character)),
+      "block": lookup_block(character),
+      "character": character,
+      "display": display,
+      "eol": character in ("\n", "\r"),
+      "suspicious": suspicious,
+    })
+  return ret
 
 @app.route('/')
 def hello():
@@ -39,7 +70,7 @@ def hello():
 @app.route('/highlight', methods=['POST'])
 def highlight():
   content = highlight_content(flask.request.form['content'])
-  return flask.render_template('highlight.html', content=flask.Markup(content))
+  return flask.render_template('highlight.html', content=content)
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', debug=True)

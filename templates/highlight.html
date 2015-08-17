@@ -11,18 +11,28 @@
       background-color: pink;
     }
 
-    .zero-width-char {
-      box-sizing: border-box;
-      display: inline-block;
+    .replaced-char>span { /* using the span inside a span prevents weirdness with eol:after */
+      border: 1px solid black;
+      margin: 0 1px;
+      padding: 1px;
       font-size: 9px;
-      height: 14px;
-      line-height: 14px;
+    }
+    .eol:after {
+      display: block;
+      content: "";
     }
   </style>
 </head>
 <body>
   <div class="wrapper">
-    {{content}}
+    {% for character in content %}<span
+      title="{{character.codepoint}} - {{character.block}}"
+      class="
+        {% if character.suspicious %}highlight{% endif %}
+        {% if character.character != character.display %}replaced-char{% endif %}
+        {% if character.eol %}eol{% endif %}
+        "
+        ><span>{{character.display}}</span></span>{% endfor %}
   </div>
   <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
