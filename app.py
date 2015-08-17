@@ -19,10 +19,10 @@ with open("unidata-blocks.txt") as f:
       "name": m.group(3),
     })
 
-def lookup_block(c):
-  c = ord(c)
+def lookup_block(character):
+  character = ord(character)
   for block in unicode_blocks:
-    if block["start"] <= c <= block["end"]:
+    if block["start"] <= character <= block["end"]:
       return block["name"]
   return None
 
