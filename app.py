@@ -7,10 +7,11 @@ app = flask.Flask(__name__)
 
 character_names = { "\n": "\\n", "\r": "\\r", "\t": "\\t" }
 
-# Load some Unicode data remotely.
+# Load the Unicode blocks list from our file.
 unicode_blocks = []
-for line in urllib.urlopen("http://www.unicode.org/Public/UNIDATA/Blocks.txt").read().split("\n"):
-  if line.strip() != "" and line[0] != "#":
+with open("unidata-blocks.txt") as f:
+  for line in f:
+    if line.strip() == "" or line[0] == "#": continue
     m = re.match("([0-9A-F]+)\.\.([0-9A-F]+); (.*)", line)
     unicode_blocks.append({
       "start": int(m.group(1), 16),
