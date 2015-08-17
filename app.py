@@ -2,9 +2,12 @@ import flask
 
 app = flask.Flask(__name__)
 
+ZWS = flask.Markup('<span class="highlight zero-width-space">zws</span>')
+
 def highlight_content(text):
   escaped = flask.Markup.escape(text)
-  with_breaks = escaped.replace('\n', flask.Markup('<br>'))
+  with_zws = escaped.replace(u'\u200B', ZWS)
+  with_breaks = with_zws.replace('\n', flask.Markup('<br>'))
   bytestring = with_breaks.encode('utf-8')
   print repr(bytestring)
   output = []
