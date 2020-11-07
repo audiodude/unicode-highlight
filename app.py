@@ -28,7 +28,7 @@ def lookup_block(character):
 
 def highlight_content(text):
   ret = []
-  for character in unicode(text):
+  for character in text:
     suspicious = False
 
     # How to display this character?
