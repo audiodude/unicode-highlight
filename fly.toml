@@ -1,16 +1,5 @@
-# fly.toml app configuration file generated for unicode-highlight on 2023-12-26T15:08:51-05:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
 app = "unicode-highlight"
 primary_region = "ord"
-
-[build]
-  builder = "paketobuildpacks/builder:base"
-
-[env]
-  PORT = "8080"
 
 [http_service]
   internal_port = 8080

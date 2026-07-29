@@ -1,1 +1,8 @@
+.git
+.github
+__pycache__
+*.pyc
+.venv
 fly.toml
+LICENSE
+README.md
